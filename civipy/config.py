@@ -18,4 +18,4 @@ if LOG_FILE:
     h.setLevel(logging.DEBUG)
     logger.addHandler(h)
 
-logger.warning("civipy logging here!")
+logger.warning("civipy is logging to here!")
