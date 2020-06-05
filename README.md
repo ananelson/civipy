@@ -2,9 +2,10 @@
 
 This is a brand-new project and code is subject to change at any time.
 
-Reading the source code is the primary documentation for now.
+Reading the source code is the primary documentation for now. There are also
+some tests which document usage. Author is hanging out in CiviCRM mattermost.
 
-Store your credentails in environment variables `CIVI_REST_BASE`,
+Store your credentials in environment variables `CIVI_REST_BASE`,
 `CIVI_USER_KEY`, `CIVI_SITE_KEY`.
 
 To log to a file instead of the screen, set the `CIVIPY_LOG_FILE` environment
@@ -23,11 +24,15 @@ Or directly call CiviCRMBase:
     CiviCRMBase._get("Contact", primary_email="ana@ananelson.com")
 ```
 
+Functions which directly call CiviCRM API methods, with a minimum of
+processing, start with an underscore, e.g. `_get`. Convenience methods which do
+more processing do not start with an underscore, e.g. `find_or_create`
+
 ## Copyright & License
 
 civipy Copyright (c) 2020 Ana Nelson
 
-Licnsed under the GPL v3
+Licensed under the GPL v3
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

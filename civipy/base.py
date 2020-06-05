@@ -79,6 +79,26 @@ class CiviCRMBase(object):
         """
         return klass.http_post('create', entity, kwargs)
 
+
+    @classmethod
+    def _search_query(klass, search_key_name, kwargs):
+        if isinstance(search_key_name, str):
+            return {search_key_name : kwargs[search_key_name]}
+        else:
+            return dict((k, kwargs[k]) for k in search_key_name)
+
+    @classmethod
+    def find(klass, entity=None, search_key_name='id', **kwargs):
+        """
+        Looks for an existing object in CiviCRM with parameter search_key_name
+        equal to the value for search_key_name specified in kwargs. Returns an
+        object of class klass populated with this object's data if found.
+        """
+        search_query = klass._search_query(search_key_name, kwargs)
+        response = klass._get(entity, **search_query)
+        value = get_unique_value(response)
+        return klass(value)
+
     @classmethod
     def find_or_create(klass, entity=None, search_key_name='id', do_update=False, **kwargs):
         """
@@ -87,14 +107,7 @@ class CiviCRMBase(object):
         specified in kwargs. Returns this object if it exists,
         otherwise creates a new object. Return's object's parsed JSON.
         """
-        logger.debug("")
-        logger.debug("in find_or_create")
-
-        if isinstance(search_key_name, str):
-            search_query = {search_key_name : kwargs[search_key_name]}
-        else:
-            search_query = dict((k, kwargs[k]) for k in search_key_name)
-
+        search_query = klass._search_query(search_key_name, kwargs)
         response = klass._get(entity, **search_query)
         if response['count'] == 1:
             logger.debug("found existing record for: %s" % str(search_query))
@@ -111,3 +124,6 @@ class CiviCRMBase(object):
             logger.debug("new record created! full response: %s" % str(response))
             assert_unique(response)
             return response['values'][0]
+
+    def __init__(self, data):
+        self.civi = data

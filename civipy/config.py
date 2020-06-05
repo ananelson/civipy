@@ -3,9 +3,9 @@ import os
 
 
 # load credentials from OS environment
-REST_BASE = os.environ['CIVI_REST_BASE']
-USER_KEY = os.environ['CIVI_USER_KEY']
-SITE_KEY = os.environ['CIVI_SITE_KEY']
+REST_BASE = os.environ.get('CIVI_REST_BASE')
+USER_KEY = os.environ.get('CIVI_USER_KEY')
+SITE_KEY = os.environ.get('CIVI_SITE_KEY')
 
 
 # set up logging
