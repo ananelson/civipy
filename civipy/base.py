@@ -150,19 +150,19 @@ class CiviCRMBase(object):
         specified in kwargs. Returns this object if it exists,
         otherwise creates a new object.
         """
-        obj = klass.find(entity=entity, search_key_name=search_key_name, **kwargs)
-        if obj is not None and do_update:
-            raise Exception("update not implemented yet")
-            logger.debug("do_update is true, updating record to match: %s" % str(kwargs))
-            obj.civi.update(kwargs)
-            klass._create(entity, **obj)
-            return obj
+        if do_update:
+            obj = klass.find_and_update(entity=entity, search_key_name=search_key_name, **kwargs)
         else:
+            obj = klass.find(entity=entity, search_key_name=search_key_name, **kwargs)
+
+        if obj is None:
             logger.debug("creating new record for %s" % str(kwargs))
             response = klass._create(entity, **kwargs)
             logger.debug("new record created! full response: %s" % str(response))
-            assert_unique(response)
-            return response['values'][0]
+            value = get_unique_value(response)
+            return klass(value)
+        else:
+            return obj
 
     def __init__(self, data):
         self.civi = data
