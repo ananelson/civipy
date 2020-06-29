@@ -28,6 +28,14 @@ Functions which directly call CiviCRM API methods, with a minimum of
 processing, start with an underscore, e.g. `_get`. Convenience methods which do
 more processing do not start with an underscore, e.g. `find_or_create`
 
+## REST_BASE
+
+The `CIVI_REST_BASE` setting lets you specify the URL of your REST API, OR it
+can now refer to the `cv` or `drush` executable on your file system. If "http"
+is found in CIVI_REST_BASE, the system will use http calls to the REST API. If
+the string "drush" is found in CIVI_REST_BASE, it will use drush. And if
+neither of these are found, it will attempt to call the cv command line API.
+
 ## Copyright & License
 
 civipy Copyright (c) 2020 Ana Nelson

@@ -1,5 +1,7 @@
 import json
 
+AUTH_ERROR_TEXT = {'error_message': 'Failed to authenticate key', 'is_error': 1}
+
 class MockResponse:
     def __init__(self, json_data, status_code):
         self.json_data = json_data
