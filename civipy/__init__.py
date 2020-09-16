@@ -8,6 +8,7 @@ from civipy.contact import CiviPhone
 from civipy.contact import CiviRelationship
 from civipy.contact import CiviTag
 from civipy.contact import CiviWebsite
+from civipy.contribution import CiviContribution
 from civipy.event import CiviEvent
 from civipy.event import CiviParticipant
 from civipy.note import CiviActivity
