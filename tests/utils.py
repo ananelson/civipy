@@ -6,6 +6,7 @@ class MockResponse:
     def __init__(self, json_data, status_code):
         self.json_data = json_data
         self.status_code = status_code
+        self.url = "http://civipy/tests"
 
     def json(self):
         return self.json_data
@@ -64,6 +65,48 @@ def mocked_contact_get_responses(params):
     else:
         raise Exception("not implemented")
 
+
+def mocked_contribution_get_response(params):
+    if params.get("trxn_id") == "12345":
+        data = {
+            'is_error': 0,
+            'undefined_fields': ['contribution_test', 'trxn_id'],
+            'version': 3,
+            'count': 1,
+            'id': 55,
+            'values': [
+                {'contact_id': '154', 'contact_type': 'Individual',
+                 'contact_sub_type': '', 'sort_name': 'Donor, Sample',
+                 'display_name': 'Sample Donor', 'contribution_id': '55',
+                 'currency': 'USD', 'receive_date': '2020-09-03 12:40:59',
+                 'non_deductible_amount': '', 'total_amount': '200.00',
+                 'fee_amount': '4.70', 'net_amount': '195.30', 'trxn_id': '12345',
+                 'invoice_id': '', 'cancel_date': '', 'cancel_reason': '0',
+                 'receipt_date': '2020-09-03 16:41:27', 'thankyou_date': '',
+                 'contribution_source': 'Online Contribution', 'amount_level': '',
+                 'is_test': '0', 'is_pay_later': '0', 'contribution_status_id': '1',
+                 'check_number': '', 'contribution_campaign_id': '',
+                 'financial_type_id': '1', 'financial_type': 'Donation',
+                 'product_id': '', 'product_name': '', 'sku': '',
+                 'contribution_product_id': '', 'product_option': '',
+                 'fulfilled_date': '', 'contribution_start_date': '',
+                 'contribution_end_date': '', 'contribution_recur_id': '',
+                 'financial_account_id': '1', 'accounting_code': '',
+                 'contribution_note': '', 'contribution_batch': '',
+                 'contribution_status': 'Completed', 'payment_instrument': 'Credit Card',
+                 'payment_instrument_id': '1', 'instrument_id': '1',
+                 'contribution_check_number': '', 'contribution_campaign_title': '',
+                 'id': '55', 'contribution_type_id': '1'}
+            ]
+        }
+        return MockResponse(data, 200)
+    elif params.get('trxn_id') == "00000":
+        data = { "is_error": 0, "version": 3, "count": 0, "values": [] }
+        return MockResponse(data, 200)
+    else:
+        raise Exception("not implemented")
+
+
 def mocked_requests_get(*args, **kwargs):
     entity = kwargs['params']['entity']
     action = kwargs['params']['action']
@@ -75,10 +118,16 @@ def mocked_requests_get(*args, **kwargs):
             return mocked_contact_get_responses(json_params)
         else:
             raise Exception("action %s not implemented for %s" % (action, entity))
+    elif entity == 'Contribution':
+        if action == 'get':
+            return mocked_contribution_get_response(json_params)
+        else:
+            raise Exception("action %s not implemented for %s" % (action, entity))
     else:
         raise Exception("entity %s not implemented" % (entity))
 
     return MockResponse(None, 404)
+
 
 def mocked_requests_post(*args, **kwargs):
     entity = kwargs['params']['entity']
