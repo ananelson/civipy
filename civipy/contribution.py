@@ -44,3 +44,8 @@ class CiviContribution(CiviCRMBase):
                 "BETWEEN": [receive_date, f"{receive_date} 23:59:59"]
             }
         return cls.find_all(search_key_name=query.keys(), **query)
+
+
+class CiviContributionRecur(CiviCRMBase):
+    civicrm_entity_table = 'contributionrecur'
+
