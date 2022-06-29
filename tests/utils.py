@@ -108,10 +108,7 @@ def mocked_contribution_get_response(params):
 
 
 def mocked_requests_get(*args, **kwargs):
-    entity = kwargs['params']['entity']
-    action = kwargs['params']['action']
-    json_params = json.loads(kwargs['params']['json'])
-    del json_params['sequential']
+    entity, action, json_params = deconstruct_params(kwargs['params'])
 
     if entity == 'Contact':
         if action == 'get':
@@ -124,16 +121,13 @@ def mocked_requests_get(*args, **kwargs):
         else:
             raise Exception("action %s not implemented for %s" % (action, entity))
     else:
-        raise Exception("entity %s not implemented" % (entity))
+        raise Exception("entity %s not implemented" % entity)
 
     return MockResponse(None, 404)
 
 
 def mocked_requests_post(*args, **kwargs):
-    entity = kwargs['params']['entity']
-    action = kwargs['params']['action']
-    json_params = json.loads(kwargs['params']['json'])
-    del json_params['sequential']
+    entity, action, json_params = deconstruct_params(kwargs['params'])
 
     if entity == 'Contact':
         if action == 'create':
@@ -144,3 +138,11 @@ def mocked_requests_post(*args, **kwargs):
         raise Exception("entity %s not implemented" % (entity))
 
     return MockResponse(None, 404)
+
+
+def deconstruct_params(params):
+    excluded_keys = {'api_key', 'debug', 'key', 'json', 'sequential'}
+    json_params = {k: v for k, v in params.items() if k not in excluded_keys}
+    entity = json_params.pop('entity')
+    action = json_params.pop('action')
+    return entity, action, json_params
