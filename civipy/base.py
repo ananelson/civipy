@@ -7,24 +7,16 @@ from civipy.config import API_TYPE
 from civipy.config import USER_KEY
 from civipy.config import SITE_KEY
 from civipy.config import logger
+from civipy.exceptions import CiviProgrammingError
+from civipy.exceptions import CiviAPIError
+from civipy.exceptions import CiviHTTPError
 
-class CiviHTTPError(Exception):
-    def __init__(self, r):
-        print(dir(r))
-        print(r.text)
-        self.r = r
-        self.status_code = r.status_code
-        self.message = r.text
-
-class CiviAPIError(Exception):
-    def __init__(self, data):
-        self.code = data.get('error_code')
-        self.message = data.get('error_message')
 
 def assert_unique(response):
     if not 'count' in response:
-        raise Exception("no count in response!")
+        raise CiviProgrammingError("no count in response!")
     assert response['count'] == 1, response
+
 
 def get_unique(response):
     if isinstance(response['values'], dict):
@@ -33,13 +25,16 @@ def get_unique(response):
     else:
         return get_unique_value(response)
 
+
 def get_unique_value(response):
     assert_unique(response)
     return response['values'][0]
 
+
 def get_unique_value_for_id(contact_id, response):
     assert response['count'] == 1, response
     return response['values'][contact_id]
+
 
 class CiviCRMBase(object):
     REPR_FIELDS = ["display_name", "name"]
@@ -49,22 +44,23 @@ class CiviCRMBase(object):
         if entity is None:
             entity = klass.__name__[4:]
             if entity == "CRMBase":
-                raise Exception("Must provide entity")
+                raise CiviProgrammingError("Must provide entity")
         return entity
 
     @classmethod
     def _params(klass, entity, action, kwargs):
         entity = klass._entity(entity)
-        json_params = {'sequential' : 1}
-        json_params.update(kwargs)
-        return {
-                'entity' : entity,
-                'action' : action,
-                'api_key' : USER_KEY,
-                'debug' : 1,
-                'key' : SITE_KEY,
-                'json' : json.dumps(json_params)
-                }
+        params = {
+            'entity' : entity,
+            'action' : action,
+            'api_key' : USER_KEY,
+            'debug' : 1,
+            'key' : SITE_KEY,
+            'json' : 1,
+            'sequential': 1,
+        }
+        params.update(kwargs)
+        return params
 
     @classmethod
     def process_http_response(klass, r):
@@ -127,7 +123,7 @@ class CiviCRMBase(object):
         elif API_TYPE == 'cvcli':
             return klass.run_cvcli_process
         else:
-            raise Exception("not implemented %s" % API_TYPE)
+            raise CiviProgrammingError("not implemented %s" % API_TYPE)
 
     @classmethod
     def _post_method(klass):
@@ -138,7 +134,7 @@ class CiviCRMBase(object):
         elif API_TYPE == 'cvcli':
             return klass.run_cvcli_process
         else:
-            raise Exception("not implemented %s" % API_TYPE)
+            raise CiviProgrammingError("not implemented %s" % API_TYPE)
 
     @classmethod
     def _get(klass, entity=None, **kwargs):
