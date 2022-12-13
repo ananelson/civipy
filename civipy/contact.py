@@ -7,7 +7,7 @@ class CiviContact(CiviNotable):
     civicrm_entity_table = 'contact'
 
     @classmethod
-    def find_by_email(klass, email_address):
+    def find_by_email(cls, email_address):
         result = CiviEmail._get(email=email_address)
         if result['count'] == 0:
             return None
@@ -29,13 +29,13 @@ class CiviWebsite(CiviCRMBase):
 
 class CiviRelationship(CiviCRMBase):
     @classmethod
-    def create_or_increment_relationship(klass, contact_id_a, contact_id_b, relationship_type_id, event_id=None, activity_id=None):
+    def create_or_increment_relationship(cls, contact_id_a, contact_id_b, relationship_type_id, event_id=None, activity_id=None):
         print("in create_or_increment_relationship with a %s b %s type %s" % (contact_id_a, contact_id_b, relationship_type_id))
 
         if not event_id and not activity_id:
             raise Exception("must provide either event_id or activity_id")
 
-        existing_relationship = klass.find(
+        existing_relationship = cls.find(
                 search_key_name = ['contact_id_a', 'contact_id_b', 'relationship_type_id'],
                 contact_id_a = contact_id_a,
                 contact_id_b = contact_id_b,
@@ -43,7 +43,7 @@ class CiviRelationship(CiviCRMBase):
 
         if existing_relationship is None:
             # look for reverse relationship
-            existing_relationship = klass.find(
+            existing_relationship = cls.find(
                     search_key_name = ['contact_id_a', 'contact_id_b', 'relationship_type_id'],
                     contact_id_a = contact_id_b,
                     contact_id_b = contact_id_a,
@@ -58,7 +58,7 @@ class CiviRelationship(CiviCRMBase):
 
         if existing_relationship is None:
             # create new relationshp
-            klass.create(
+            cls.create(
                 contact_id_a = contact_id_a,
                 contact_id_b = contact_id_b,
                 relationship_type_id = relationship_type_id,
@@ -97,14 +97,14 @@ class CiviGroupContact(CiviCRMBase):
 
 class CiviGroup(CiviCRMBase):
     @classmethod
-    def find(klass, title):
+    def find(cls, title):
         """
         Creates a new CiviGroup object populated with 
         data for the group entitled "title"
         """
         response = CiviGroup._get(title=title)
         group_data = get_unique(response)
-        return klass(group_data)
+        return cls(group_data)
 
     def add_member(self, civi_contact):
         CiviGroupContact.find_or_create(

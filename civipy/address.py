@@ -16,7 +16,7 @@ class CiviAddress(CiviCRMBase):
     state_province_abbreviation_cache = {}
 
     @classmethod
-    def _create(klass, entity=None, **kwargs):
+    def _create(cls, entity=None, **kwargs):
         """
         Calls the CiviCRM API create action and returns parsed JSON on success.
 
@@ -25,27 +25,27 @@ class CiviAddress(CiviCRMBase):
         """
         if 'country_iso_code' in kwargs:
             country_iso_code = kwargs['country_iso_code']
-            if country_iso_code in klass.country_iso_code_cache:
-                country = klass.country_iso_code_cache[country_iso_code]
+            if country_iso_code in cls.country_iso_code_cache:
+                country = cls.country_iso_code_cache[country_iso_code]
             else:
                 country = CiviCountry.find(**{"iso_code" : country_iso_code})
-                klass.country_iso_code_cache[country_iso_code] = country
+                cls.country_iso_code_cache[country_iso_code] = country
 
             del kwargs['country_iso_code']
             kwargs['country_id'] = country.civi_id
 
-            if not country.civi_id in klass.state_province_abbreviation_cache:
-                klass.state_province_abbreviation_cache[country.civi_id] = {}
+            if not country.civi_id in cls.state_province_abbreviation_cache:
+                cls.state_province_abbreviation_cache[country.civi_id] = {}
 
         if country.is_province_abbreviated and 'state_province_abbreviation' in kwargs:
             state_province_abbreviation = kwargs['state_province_abbreviation']
-            if state_province_abbreviation in klass.state_province_abbreviation_cache[country.civi_id]:
+            if state_province_abbreviation in cls.state_province_abbreviation_cache[country.civi_id]:
                 logger.debug("using cache for %s" % state_province_abbreviation)
-                state_province_id = klass.state_province_abbreviation_cache[country.civi_id][state_province_abbreviation]
+                state_province_id = cls.state_province_abbreviation_cache[country.civi_id][state_province_abbreviation]
             else:
                 response = CiviStateProvince._get(**{"country_id" : country.civi_id, "abbreviation" : state_province_abbreviation})
                 state_province_id = get_unique(response)['id']
-                klass.state_province_abbreviation_cache[country.civi_id][state_province_abbreviation] = state_province_id
+                cls.state_province_abbreviation_cache[country.civi_id][state_province_abbreviation] = state_province_id
 
             del kwargs['state_province_abbreviation']
             kwargs['state_province_id'] = state_province_id

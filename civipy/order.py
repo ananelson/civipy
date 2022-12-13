@@ -5,5 +5,5 @@ class CiviOrder(CiviCRMBase):
 
 class CiviPayment(CiviCRMBase):
     @classmethod
-    def cancel(klass, **kwargs):
-        return klass._post_method()('cancel', "Payment", kwargs)
+    def cancel(cls, **kwargs):
+        return cls._post_method()('cancel', "Payment", kwargs)

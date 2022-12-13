@@ -6,11 +6,7 @@ class CiviProgrammingError(CivipyException):
     pass
 
 
-class NonUniqueEmailException(CivipyException):
-    pass
-
-
-class NonUniqueNameException(CivipyException):
+class NonUniqueSelectorException(CivipyException):
     pass
 
 

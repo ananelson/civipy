@@ -40,16 +40,16 @@ class CiviCRMBase(object):
     REPR_FIELDS = ["display_name", "name"]
 
     @classmethod
-    def _entity(klass, entity=None):
+    def _entity(cls, entity=None):
         if entity is None:
-            entity = klass.__name__[4:]
+            entity = cls.__name__[4:]
             if entity == "CRMBase":
                 raise CiviProgrammingError("Must provide entity")
         return entity
 
     @classmethod
-    def _params(klass, entity, action, kwargs):
-        entity = klass._entity(entity)
+    def _params(cls, entity, action, kwargs):
+        entity = cls._entity(entity)
         params = {
             'entity' : entity,
             'action' : action,
@@ -63,103 +63,103 @@ class CiviCRMBase(object):
         return params
 
     @classmethod
-    def process_http_response(klass, r):
+    def process_http_response(cls, r):
         logger.debug(r.url)
         if r.status_code == 200:
-            return klass.process_json_response(r.json())
+            return cls.process_json_response(r.json())
         else:
             raise CiviHTTPError(r)
 
     @classmethod
-    def process_json_response(klass, data):
+    def process_json_response(cls, data):
         if 'is_error' in data and data['is_error'] == 1:
             raise CiviAPIError(data)
         return data
 
     @classmethod
-    def http_get(klass, action, entity, kwargs):
-        params = klass._params(entity, action, kwargs)
+    def http_get(cls, action, entity, kwargs):
+        params = cls._params(entity, action, kwargs)
         logger.debug(str(params))
         r = requests.get(
                 REST_BASE,
                 params = params)
-        return klass.process_http_response(r)
+        return cls.process_http_response(r)
 
     @classmethod
-    def http_post(klass, action, entity, kwargs):
-        params = klass._params(entity, action, kwargs)
+    def http_post(cls, action, entity, kwargs):
+        params = cls._params(entity, action, kwargs)
         logger.debug(str(params))
         r = requests.post(
                 REST_BASE,
                 params = params)
-        return klass.process_http_response(r)
+        return cls.process_http_response(r)
 
     @classmethod
-    def run_drush_process(klass, action, entity, params):
-        entity = klass._entity(entity)
+    def run_drush_process(cls, action, entity, params):
+        entity = cls._entity(entity)
         # use Popen directly since many nice features of run() were not added until Python 3.7
         p = subprocess.Popen([REST_BASE, "cvapi", "--out=json", "--in=json", "%s.%s" % (entity, action)],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout, stderr = p.communicate(json.dumps(params).encode("UTF-8"))
-        return klass.process_json_response(json.loads(stdout.decode("UTF-8")))
+        return cls.process_json_response(json.loads(stdout.decode("UTF-8")))
 
     @classmethod
-    def run_cvcli_process(klass, action, entity, params):
-        entity = klass._entity(entity)
+    def run_cvcli_process(cls, action, entity, params):
+        entity = cls._entity(entity)
         # use Popen directly since many nice features of run() were not added until Python 3.7
         # cli.php -e entity -a action [-u user] [-s site] [--output|--json] [PARAMS]
         params = ["--%s=%s" % (k, v) for k, v in params.items()]
         p = subprocess.Popen([REST_BASE, "-e", entity, "-a", action, "--json"] + params,
                 stdout=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        return klass.process_json_response(json.loads(stdout.decode("UTF-8")))
+        return cls.process_json_response(json.loads(stdout.decode("UTF-8")))
 
     @classmethod
-    def _get_method(klass):
+    def _get_method(cls):
         if API_TYPE == 'http':
-            return klass.http_get
+            return cls.http_get
         elif API_TYPE == 'drush':
-            return klass.run_drush_process
+            return cls.run_drush_process
         elif API_TYPE == 'cvcli':
-            return klass.run_cvcli_process
+            return cls.run_cvcli_process
         else:
             raise CiviProgrammingError("not implemented %s" % API_TYPE)
 
     @classmethod
-    def _post_method(klass):
+    def _post_method(cls):
         if API_TYPE == 'http':
-            return klass.http_post
+            return cls.http_post
         elif API_TYPE == 'drush':
-            return klass.run_drush_process
+            return cls.run_drush_process
         elif API_TYPE == 'cvcli':
-            return klass.run_cvcli_process
+            return cls.run_cvcli_process
         else:
             raise CiviProgrammingError("not implemented %s" % API_TYPE)
 
     @classmethod
-    def _get(klass, entity=None, **kwargs):
+    def _get(cls, entity=None, **kwargs):
         """
         Calls the CiviCRM API get action and returns parsed JSON on success.
         """
-        return klass._get_method()('get', entity, kwargs)
+        return cls._get_method()('get', entity, kwargs)
 
     @classmethod
-    def _getsingle(klass, entity, **kwargs):
+    def _getsingle(cls, entity, **kwargs):
         """
         Calls the CiviCRM API getsingle action and returns parsed JSON on success.
         """
-        return klass._get_method()('getsingle', entity, kwargs)
+        return cls._get_method()('getsingle', entity, kwargs)
 
     @classmethod
-    def _create(klass, entity=None, **kwargs):
+    def _create(cls, entity=None, **kwargs):
         """
         Calls the CiviCRM API create action and returns parsed JSON on success.
         """
-        return klass._post_method()('create', entity, kwargs)
+        return cls._post_method()('create', entity, kwargs)
 
 
     @classmethod
-    def _search_query(klass, search_key_name, kwargs):
+    def _search_query(cls, search_key_name, kwargs):
         if search_key_name == 'id' and not search_key_name in kwargs:
             # search_key_name is not specified, assume all of kwargs corresponds to search key
             return kwargs
@@ -177,68 +177,68 @@ class CiviCRMBase(object):
         return draft
 
     @classmethod
-    def find(klass, entity=None, search_key_name='id', **kwargs):
+    def find(cls, entity=None, search_key_name='id', **kwargs):
         """
         Looks for an existing object in CiviCRM with parameter search_key_name
         equal to the value for search_key_name specified in kwargs. Returns an
-        object of class klass populated with this object's data if found, otherwise
+        object of class cls populated with this object's data if found, otherwise
         returns None.
         """
-        search_query = klass._search_query(search_key_name, kwargs)
-        response = klass._get(entity, **search_query)
+        search_query = cls._search_query(search_key_name, kwargs)
+        response = cls._get(entity, **search_query)
         if response['count'] == 0:
             return
         else:
             value = get_unique(response)
-            return klass(value)
+            return cls(value)
 
     @classmethod
-    def find_and_update(klass, entity=None, search_key_name='id', **kwargs):
+    def find_and_update(cls, entity=None, search_key_name='id', **kwargs):
         """
         Looks for an existing object in CiviCRM with parameter search_key_name
         equal to the value for search_key_name specified in kwargs. If a unique
         record is found, record is also updated with additional values in kwargs.
 
-        Returns an object of class klass populated with this object's data if
+        Returns an object of class cls populated with this object's data if
         found, otherwise returns None.
         """
-        search_query = klass._search_query(search_key_name, kwargs)
-        response = klass._get(entity, **search_query)
+        search_query = cls._search_query(search_key_name, kwargs)
+        response = cls._get(entity, **search_query)
         if response['count'] == 0:
             return
         else:
             value = get_unique(response)
             value.update(kwargs) 
-            new_response = klass._create(entity=entity, **value)
+            new_response = cls._create(entity=entity, **value)
             updated_value = get_unique(new_response)
             # not all fields are included in the return from an update, so we merge both sources
             updated_value.update(value)
-            return klass(updated_value)
+            return cls(updated_value)
 
     @classmethod
-    def find_all(klass, entity=None, search_key_name='id', **kwargs):
+    def find_all(cls, entity=None, search_key_name='id', **kwargs):
         """
         Looks for multiple existing objects in CiviCRM with parameter
         search_key_name equal to the value for search_key_name specified in
-        kwargs. Returns a list of objects of class klass populated with data.
+        kwargs. Returns a list of objects of class cls populated with data.
         Returns an empty list if no matching values found.
         """
-        search_query = klass._search_query(search_key_name, kwargs)
-        response = klass._get(entity, **search_query)
-        return [klass(v) for v in response['values']]
+        search_query = cls._search_query(search_key_name, kwargs)
+        response = cls._get(entity, **search_query)
+        return [cls(v) for v in response['values']]
 
     @classmethod
-    def create(klass, entity=None, **kwargs):
-        response = klass._create(entity, **kwargs)
+    def create(cls, entity=None, **kwargs):
+        response = cls._create(entity, **kwargs)
         logger.debug("new record created! full response: %s" % str(response))
         if not isinstance(response.get('values'), int):
             value = get_unique(response)
-            return klass(value)
+            return cls(value)
         else:
             return response
 
     @classmethod
-    def find_or_create(klass, entity=None, search_key_name='id', do_update=False, **kwargs):
+    def find_or_create(cls, entity=None, search_key_name='id', do_update=False, **kwargs):
         """
         Looks for an existing object in CiviCRM with parameter
         search_key_name equal to the value for search_key_name
@@ -246,12 +246,12 @@ class CiviCRMBase(object):
         otherwise creates a new object.
         """
         if do_update:
-            obj = klass.find_and_update(entity=entity, search_key_name=search_key_name, **kwargs)
+            obj = cls.find_and_update(entity=entity, search_key_name=search_key_name, **kwargs)
         else:
-            obj = klass.find(entity=entity, search_key_name=search_key_name, **kwargs)
+            obj = cls.find(entity=entity, search_key_name=search_key_name, **kwargs)
 
         if obj is None:
-            return klass.create(entity, **kwargs)
+            return cls.create(entity, **kwargs)
         else:
             return obj
 
