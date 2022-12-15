@@ -2,10 +2,7 @@ import json
 import requests
 import subprocess
 
-from civipy.config import REST_BASE
-from civipy.config import API_TYPE
-from civipy.config import USER_KEY
-from civipy.config import SITE_KEY
+from civipy.config import SETTINGS
 from civipy.config import logger
 from civipy.exceptions import CiviProgrammingError
 from civipy.exceptions import CiviAPIError
@@ -53,9 +50,9 @@ class CiviCRMBase(object):
         params = {
             'entity' : entity,
             'action' : action,
-            'api_key' : USER_KEY,
+            'api_key' : SETTINGS.user_key,
             'debug' : 1,
-            'key' : SITE_KEY,
+            'key' : SETTINGS.site_key,
             'json' : 1,
             'sequential': 1,
         }
@@ -81,7 +78,7 @@ class CiviCRMBase(object):
         params = cls._params(entity, action, kwargs)
         logger.debug(str(params))
         r = requests.get(
-                REST_BASE,
+                SETTINGS.rest_base,
                 params = params)
         return cls.process_http_response(r)
 
@@ -90,7 +87,7 @@ class CiviCRMBase(object):
         params = cls._params(entity, action, kwargs)
         logger.debug(str(params))
         r = requests.post(
-                REST_BASE,
+                SETTINGS.rest_base,
                 params = params)
         return cls.process_http_response(r)
 
@@ -98,7 +95,7 @@ class CiviCRMBase(object):
     def run_drush_process(cls, action, entity, params):
         entity = cls._entity(entity)
         # use Popen directly since many nice features of run() were not added until Python 3.7
-        p = subprocess.Popen([REST_BASE, "cvapi", "--out=json", "--in=json", "%s.%s" % (entity, action)],
+        p = subprocess.Popen([SETTINGS.rest_base, "cvapi", "--out=json", "--in=json", "%s.%s" % (entity, action)],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout, stderr = p.communicate(json.dumps(params).encode("UTF-8"))
         return cls.process_json_response(json.loads(stdout.decode("UTF-8")))
@@ -109,32 +106,32 @@ class CiviCRMBase(object):
         # use Popen directly since many nice features of run() were not added until Python 3.7
         # cli.php -e entity -a action [-u user] [-s site] [--output|--json] [PARAMS]
         params = ["--%s=%s" % (k, v) for k, v in params.items()]
-        p = subprocess.Popen([REST_BASE, "-e", entity, "-a", action, "--json"] + params,
+        p = subprocess.Popen([SETTINGS.rest_base, "-e", entity, "-a", action, "--json"] + params,
                 stdout=subprocess.PIPE)
         stdout, stderr = p.communicate()
         return cls.process_json_response(json.loads(stdout.decode("UTF-8")))
 
     @classmethod
     def _get_method(cls):
-        if API_TYPE == 'http':
+        if SETTINGS.api_type == 'http':
             return cls.http_get
-        elif API_TYPE == 'drush':
+        elif SETTINGS.api_type == 'drush':
             return cls.run_drush_process
-        elif API_TYPE == 'cvcli':
+        elif SETTINGS.api_type == 'cvcli':
             return cls.run_cvcli_process
         else:
-            raise CiviProgrammingError("not implemented %s" % API_TYPE)
+            raise CiviProgrammingError("not implemented %s" % SETTINGS.api_type)
 
     @classmethod
     def _post_method(cls):
-        if API_TYPE == 'http':
+        if SETTINGS.api_type == 'http':
             return cls.http_post
-        elif API_TYPE == 'drush':
+        elif SETTINGS.api_type == 'drush':
             return cls.run_drush_process
-        elif API_TYPE == 'cvcli':
+        elif SETTINGS.api_type == 'cvcli':
             return cls.run_cvcli_process
         else:
-            raise CiviProgrammingError("not implemented %s" % API_TYPE)
+            raise CiviProgrammingError("not implemented %s" % SETTINGS.api_type)
 
     @classmethod
     def _get(cls, entity=None, **kwargs):
