@@ -79,11 +79,11 @@ class Settings:
         self.__dict__.update(values)
 
         # set up logging
-        if self._log_level:
-            logger.setLevel(self._log_level)
-        if self._log_file:
-            h = logging.FileHandler(self._log_file)
-            h.setLevel(self._log_level or logging.DEBUG)
+        if self.log_level:
+            logger.setLevel(self.log_level)
+        if self.log_file:
+            h = logging.FileHandler(self.log_file)
+            h.setLevel(self.log_level or logging.DEBUG)
             logger.addHandler(h)
 
     def __getattribute__(self, item: str):
@@ -91,7 +91,7 @@ class Settings:
         if item in ALL_KEYS:
             if self.__dict__[item] is NOTSET:
                 self.from_environment()
-            return Settings.__dict__[item]
+            return self.__dict__[item]
         return super().__getattribute__(item)
 
 

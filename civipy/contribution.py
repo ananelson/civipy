@@ -72,3 +72,15 @@ class CiviContribution(CiviCRMBase):
 
 class CiviContributionRecur(CiviCRMBase):
     civicrm_entity_table = 'contributionrecur'
+
+    @classmethod
+    def find_by_transaction_id(cls, trxn_id: str):
+        """
+        Find a recurring contribution by subscription transaction ID
+        """
+        found = cls._get(trxn_id=trxn_id)
+        if not found or found.get("count") == 0:
+            return
+        if found and found.get("count") == 1:
+            return cls(get_unique(found))
+        raise NonUniqueSelectorException(f"Multiple ContributionRecur records found for Subscription ID {trxn_id}!")

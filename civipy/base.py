@@ -1,6 +1,7 @@
 import json
 import requests
 import subprocess
+from typing import Callable, Optional, Any
 
 from civipy.config import SETTINGS
 from civipy.config import logger
@@ -112,7 +113,7 @@ class CiviCRMBase(object):
         return cls.process_json_response(json.loads(stdout.decode("UTF-8")))
 
     @classmethod
-    def _get_method(cls):
+    def _get_method(cls) -> Callable[[str, Optional[str], Any], Any]:
         if SETTINGS.api_type == 'http':
             return cls.http_get
         elif SETTINGS.api_type == 'drush':
@@ -123,7 +124,7 @@ class CiviCRMBase(object):
             raise CiviProgrammingError("not implemented %s" % SETTINGS.api_type)
 
     @classmethod
-    def _post_method(cls):
+    def _post_method(cls) -> Callable[[str, Optional[str], Any], Any]:
         if SETTINGS.api_type == 'http':
             return cls.http_post
         elif SETTINGS.api_type == 'drush':
@@ -153,7 +154,6 @@ class CiviCRMBase(object):
         Calls the CiviCRM API create action and returns parsed JSON on success.
         """
         return cls._post_method()('create', entity, kwargs)
-
 
     @classmethod
     def _search_query(cls, search_key_name, kwargs):
