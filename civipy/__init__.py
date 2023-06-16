@@ -12,6 +12,8 @@ from civipy.contribution import CiviContribution
 from civipy.country import CiviCountry
 from civipy.event import CiviEvent
 from civipy.event import CiviParticipant
+from civipy.membership import CiviMembership
+from civipy.membership import CiviMembershipPayment
 from civipy.note import CiviActivity
 from civipy.note import CiviNote
 from civipy.option_group import CiviCustomField

@@ -34,24 +34,24 @@ class CiviAddress(CiviCRMBase):
             del kwargs['country_iso_code']
             kwargs['country_id'] = country.civi_id
 
-            if not country.civi_id in cls.state_province_abbreviation_cache:
+            if country.civi_id not in cls.state_province_abbreviation_cache:
                 cls.state_province_abbreviation_cache[country.civi_id] = {}
 
-        if country.is_province_abbreviated and 'state_province_abbreviation' in kwargs:
-            state_province_abbreviation = kwargs['state_province_abbreviation']
-            if state_province_abbreviation in cls.state_province_abbreviation_cache[country.civi_id]:
-                logger.debug("using cache for %s" % state_province_abbreviation)
-                state_province_id = cls.state_province_abbreviation_cache[country.civi_id][state_province_abbreviation]
-            else:
-                response = CiviStateProvince._get(**{"country_id" : country.civi_id, "abbreviation" : state_province_abbreviation})
-                state_province_id = get_unique(response)['id']
-                cls.state_province_abbreviation_cache[country.civi_id][state_province_abbreviation] = state_province_id
+            if country.is_province_abbreviated and 'state_province_abbreviation' in kwargs:
+                state_province_abbreviation = kwargs['state_province_abbreviation']
+                if state_province_abbreviation in cls.state_province_abbreviation_cache[country.civi_id]:
+                    logger.debug("using cache for %s" % state_province_abbreviation)
+                    state_province_id = cls.state_province_abbreviation_cache[country.civi_id][state_province_abbreviation]
+                else:
+                    response = CiviStateProvince._get(**{"country_id" : country.civi_id, "abbreviation" : state_province_abbreviation})
+                    state_province_id = get_unique(response)['id']
+                    cls.state_province_abbreviation_cache[country.civi_id][state_province_abbreviation] = state_province_id
 
-            del kwargs['state_province_abbreviation']
-            kwargs['state_province_id'] = state_province_id
-        elif not country.is_province_abbreviated and 'state_province_abbreviation' in kwargs:
-            kwargs['supplemental_address_3'] = kwargs['state_province_abbreviation_cache']
+                del kwargs['state_province_abbreviation']
+                kwargs['state_province_id'] = state_province_id
+            elif not country.is_province_abbreviated and 'state_province_abbreviation' in kwargs:
+                kwargs['supplemental_address_3'] = kwargs['state_province_abbreviation_cache']
 
-        assert ('state_province_id' in kwargs) or ('supplemental_address_3' in kwargs)
-        assert 'country_id' in kwargs
+            assert ('state_province_id' in kwargs) or ('supplemental_address_3' in kwargs)
+            assert 'country_id' in kwargs
         return CiviCRMBase._post_method()("create", 'Address', kwargs)
