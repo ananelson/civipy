@@ -22,3 +22,8 @@ from civipy.option_group import CiviOptionGroup
 from civipy.option_group import CiviOptionValue
 from civipy.order import CiviOrder
 from civipy.order import CiviPayment
+from civipy.user import CiviUFField
+from civipy.user import CiviUFGroup
+from civipy.user import CiviUFJoin
+from civipy.user import CiviUFMatch
+from civipy.user import CiviUser
