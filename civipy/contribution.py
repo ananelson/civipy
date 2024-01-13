@@ -5,7 +5,7 @@ from civipy.exceptions import NonUniqueSelectorException
 
 
 class CiviContribution(CiviCRMBase):
-    civicrm_entity_table = 'contribution'
+    civicrm_entity_table = "contribution"
 
     def complete_transaction(self, **kwargs):
         """
@@ -64,14 +64,12 @@ class CiviContribution(CiviCRMBase):
         if total_amount is not None:
             query["total_amount"] = total_amount
         if receive_date is not None:
-            query["receive_date"] = {
-                "BETWEEN": [receive_date, f"{receive_date} 23:59:59"]
-            }
+            query["receive_date"] = {"BETWEEN": [receive_date, f"{receive_date} 23:59:59"]}
         return cls.find(**query)
 
 
 class CiviContributionRecur(CiviCRMBase):
-    civicrm_entity_table = 'contributionrecur'
+    civicrm_entity_table = "contributionrecur"
 
     @classmethod
     def find_by_transaction_id(cls, trxn_id: str):

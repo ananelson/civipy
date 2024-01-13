@@ -37,7 +37,8 @@ def process_command() -> None:
 
 def print_usage() -> None:
     """Print a usage message for this script."""
-    print("""usage: release.py (major|minor|patch)
+    print(
+        """usage: release.py (major|minor|patch)
        release.py -v | --version
        release.py -h | --help
 Increments the version number at the specified level and issues a release to PyPI.
@@ -46,7 +47,8 @@ Examples:
   release.py minor       If current version is 1.1.1, updates version to 1.2.0 and issues a release.
   release.py --version   Print the current version and exit.
   release.py --help      Print this help message and exit.
-""")
+"""
+    )
 
 
 def update_version(version_file: Path, level: int) -> str:
@@ -68,7 +70,7 @@ def release(tag: str) -> None:
     root = Path(argv[0]).parent
     # commit change to version number
     run(["git", "add", "VERSION"], cwd=root)
-    run(["git", "commit", "-m", f"release ${tag}"], cwd=root)
+    run(["git", "commit", "-m", f"release {tag}"], cwd=root)
     # tag and push to GitHub for GitHub Actions to publish
     run(["git", "tag", tag], cwd=root)
     run(["git", "push", "origin", tag], cwd=root)

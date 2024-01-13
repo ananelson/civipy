@@ -8,6 +8,7 @@ The old behavior was consistent with the v3 API explorer in CiviCRM but not with
 [the v3 REST API documentation](https://docs.civicrm.org/dev/en/latest/api/v3/usage/#rest).
 - Make settings by environment variables optional, add options for file config or passing in options explicitly
 - Fix bug in creating `Address` without `country_iso_code`
+- Replaces `requests` dependency with `urllib3`
 
 ### 0.0.1 June 29, 2020
 

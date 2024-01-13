@@ -19,7 +19,7 @@ class Settings:
         for key in REQUIRED + OPTIONAL:
             values[key] = os.environ.get(f"CIVI_{key.upper()}") or os.environ.get(f"CIVIPY_{key.upper()}")
         if not values["rest_base"]:
-            values["rest_base"] = os.environ.get('CIVI_API_BASE')
+            values["rest_base"] = os.environ.get("CIVI_API_BASE")
         missing = [f"CIVI_{key.upper()}" for key in REQUIRED if not values[key]]
         if missing:
             raise Exception(f"Environment missing required configuration values: {missing}")
@@ -67,12 +67,12 @@ class Settings:
 
     def _post_read(self, values):
         # determine value for api_type
-        if 'http' in values["rest_base"]:
-            values["api_type"] = 'http'
-        elif 'drush' in values["rest_base"]:
-            values["api_type"] = 'drush'
+        if "http" in values["rest_base"]:
+            values["api_type"] = "http"
+        elif "drush" in values["rest_base"]:
+            values["api_type"] = "drush"
         else:
-            values["api_type"] = 'cvcli'
+            values["api_type"] = "cvcli"
         for key in ALL_KEYS:
             if key not in values:
                 values[key] = None

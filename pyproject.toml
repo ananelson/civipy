@@ -10,19 +10,19 @@ requires-python = ">=3.8"
 license = {text = "GPLv3"}
 authors = [ {name = "Joe Carey", email = "joecarey001@gmail.com"}, {name = "Ana Nelson", email = "ana@ananelson.com"} ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 2 - Pre-Alpha",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "License :: OSI Approved :: GPLv3 License",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
 ]
 urls = {Homepage = "https://github.com/indepndnt/civipy"}
 dynamic = ["version"]
 dependencies = [
     "urllib3",
-    "requests",
 ]
 optional-dependencies.dev = [
     "black",
@@ -44,7 +44,7 @@ test-requires = "pytest"
 
 [tool.black]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311", "py312", "py313"]
+target-version = ["py38", "py39", "py310", "py311", "py312"]
 
 [tool.coverage]
 run.source = ["civipy"]
