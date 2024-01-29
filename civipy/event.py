@@ -1,4 +1,4 @@
-from civipy.base import CiviCRMBase
+from civipy.base.base import CiviCRMBase
 
 
 class CiviEvent(CiviCRMBase):

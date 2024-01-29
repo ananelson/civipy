@@ -12,7 +12,11 @@ class CiviProgrammingError(CivipyException):
     pass
 
 
-class NonUniqueSelectorException(CivipyException):
+class NoResultError(CivipyException):
+    pass
+
+
+class NonUniqueResultError(CivipyException):
     pass
 
 

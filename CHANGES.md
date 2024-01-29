@@ -1,3 +1,10 @@
+### 0.0.3 [pending release]
+
+- Add CiviCRM v4 API usage and make it the default
+- Drop allowing `CiviCRMBase` to be used directly (must subclass to access a CiviCRM entity)
+- Update settings to automatically search for a `.civipy` or `pyproject.toml` file
+- "Drop" Python 3.8 "support"
+
 ### 0.0.2 January 13, 2024
 
 - Add `Contribution`, `ContributionRecur`, `Membership`, `Country`, and User Framework entities

@@ -1,44 +1,76 @@
 ## Getting Started
-
 This is a brand-new project and code is subject to change at any time.
 
-Reading the source code is the primary documentation for now. There are also
-some tests which document usage. Author is hanging out in CiviCRM mattermost.
+Install with `python3 -m pip install civipy`. If you are using a Python version
+older than 3.11 and want to use `pyproject.toml` configuration, install with
+`python3 -m pip install civipy[pyproject]`.
 
-Store your credentials in environment variables `CIVI_REST_BASE`,
-`CIVI_USER_KEY`, `CIVI_SITE_KEY`.
+## Configuration
 
-To log to a file instead of the screen, set the `CIVIPY_LOG_FILE` environment
-variable to the file path you want to log to.
+Configure your credentials in environment variables, a `.civipy` file, or in
+`pyproject.toml` in a `tools.civipy` section. By default CiviPy will read a `.civipy`
+file anywhere in the current working directory up to your project root, or your
+project's `pyproject.toml` file, or a `.civipy` file in the user's home folder.
+Settings in environment variables will overwrite any file settings. Alternatively,
+you can call `civipy.config.SETTINGS.init()` to set the configuration values.
 
-You can either use subclasses of CiviCRMBase, e.g.
+| Setting                   | Environment Variable | `.civipy` File             | `pyproject.toml` File          |
+|---------------------------|----------------------|----------------------------|--------------------------------|
+|                           |                      |                            | `[tool.civipy]`                |
+| Connection *(required)*   | `CIVI_REST_BASE`     | `rest_base=http://civi.py` | `rest-base = "http://civi.py"` |
+| API Version               | `CIVI_API_VERSION`   | `api_version=4`            | `api-version = "4"`            |
+| Access Token *(required)* | `CIVI_USER_KEY`      | `user_key=...`             | `user-key = "..."`             |
+| Site Token *(required)*   | `CIVI_SITE_KEY`      | `site_key=...`             | `site-key = "..."`             |
+| Log File                  | `CIVI_LOG_FILE`      | `log_file=/tmp/civipy.log` | `log-file = "/tmp/civipy.log"` |
+| Log Level                 | `CIVI_LOG_LEVEL`     | `log_level=WARNING`        | `log-level = "WARNING"`        |
+| Config File               | `CIVI_CONFIG`        |                            |                                |
+
+### Connection
+The Connection setting lets you specify the URL of your REST API, or the `cv` or
+`drush` or `wp-cli` executable on your file system. If "http" is found in the setting,
+the system will use http calls to the REST API. If the string "drush" is found, it
+will use drush. If the string "wp" is found, it will use wp-cli. And if none of these
+are found, it will attempt to call the cv command line API.
+
+### API Version
+Set to "3" to use the CiviCRM v3 API, or "4" (the default) to use the CiviCRM v4 API.
+
+### Log File
+To log to a file instead of the screen, set the Log File setting to the file path
+you want to log to.
+
+### Config File
+You can specify in an environment variable either a directory to find a `.civipy`
+configuration file in, or a file to read as a `.civipy` configuration file.
+
+## Usage
+There are class methods for retrieving and creating records and instance methods
+for working with them.
 
 ```python
-    CiviContact._get(primary_email="ana@ananelson.com")
-    CiviEmail.find_or_create(search_key_name=["contact_id", "email"], **kwargs)
+from civipy import CiviContact, CiviEmail
+
+contact = CiviContact.action("get", primary_email="ana@ananelson.com")
+email = CiviEmail.find_or_create(search_key=["contact_id", "email"], **kwargs)
+contact.update(nick_name="Ana")
 ```
 
-Or directly call CiviCRMBase:
+Each CiviCRM Entity is represented by a subclass of CiviCRMBase; if you need an entity
+that is not in the project, you can easily add it by subclassing CiviCRMBase and naming
+it the entity name prepended with "Civi", e.g.
 
 ```python
-    CiviCRMBase._get("Contact", primary_email="ana@ananelson.com")
+import civipy
+
+class CiviNewEntity(civipy.CiviCRMBase):
+    pass
 ```
 
-Functions which directly call CiviCRM API methods, with a minimum of
-processing, start with an underscore, e.g. `_get`. Convenience methods which do
-more processing do not start with an underscore, e.g. `find_or_create`
-
-## REST_BASE
-
-The `CIVI_REST_BASE` setting lets you specify the URL of your REST API, OR it
-can now refer to the `cv` or `drush` executable on your file system. If "http"
-is found in CIVI_REST_BASE, the system will use http calls to the REST API. If
-the string "drush" is found in CIVI_REST_BASE, it will use drush. And if
-neither of these are found, it will attempt to call the cv command line API.
+Many CiviCRM Actions have a corresponding method (e.g. `get`, `create`), and there are
+also a number of convenience methods which do more processing (e.g. `find_or_create`).
 
 ## Copyright & License
-
-civipy Copyright (c) 2020 Ana Nelson
+civipy Copyright &copy; 2020 Ana Nelson
 
 Licensed under the GPL v3
 

@@ -1,4 +1,5 @@
-from civipy.base import CiviCRMBase
+from civipy.base.base import CiviCRMBase
+from civipy.exceptions import NoResultError, NonUniqueResultError
 
 
 class CiviUFField(CiviCRMBase):
@@ -30,15 +31,15 @@ class CiviUFMatch(CiviCRMBase):
     def find_wp(cls, contact_ids):
         result = []
         for contact_id in set(contact_ids):
-            found = cls.find(search_key_name="contact_id", contact_id=contact_id)
+            found = cls.find(search_key="contact_id", contact_id=contact_id)
             if not found:
                 continue
             result.append(found)
         if not result:
-            raise ValueError("No result found!")
+            raise NoResultError("No result found!")
         if len(result) != 1:
             views = [f"{r.civi}\n" for r in result]
-            raise ValueError(f"Too many results:\n {''.join(views)}")
+            raise NonUniqueResultError(f"Too many results:\n {''.join(views)}")
         result = result[0]
         for attr in ("id", "domain_id", "uf_id", "contact_id"):
             result.civi[attr] = int(result.civi[attr])

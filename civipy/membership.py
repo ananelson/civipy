@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-from civipy.base import CiviCRMBase
+from datetime import datetime
+from civipy.base.base import CiviCRMBase
 from civipy.contribution import CiviContribution
 
 

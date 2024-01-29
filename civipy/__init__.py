@@ -1,29 +1,61 @@
-from civipy.address import CiviAddress
-from civipy.address import CiviLocationType
-from civipy.contact import CiviContact
-from civipy.contact import CiviEmail
-from civipy.contact import CiviGroup
-from civipy.contact import CiviGroupContact
-from civipy.contact import CiviPhone
-from civipy.contact import CiviRelationship
-from civipy.contact import CiviTag
-from civipy.contact import CiviWebsite
-from civipy.contribution import CiviContribution
-from civipy.country import CiviCountry
-from civipy.event import CiviEvent
-from civipy.event import CiviParticipant
-from civipy.membership import CiviMembership
-from civipy.membership import CiviMembershipPayment
-from civipy.note import CiviActivity
+from civipy.base.base import CiviCRMBase
+from civipy.activity import CiviActivity, CiviActivityContact
+from civipy.address import CiviAddress, CiviLocationType, CiviStateProvince, CiviCountry
+from civipy.contact import CiviContact, CiviEmail, CiviPhone, CiviRelationship, CiviTag, CiviEntityTag, CiviWebsite
+from civipy.contact import CiviGroup, CiviGroupContact
+from civipy.contribution import CiviContribution, CiviContributionRecur
+from civipy.event import CiviEvent, CiviParticipant
+from civipy.grant import CiviGrant
+from civipy.mailing import CiviMailingEventQueue
+from civipy.membership import CiviMembership, CiviMembershipPayment
 from civipy.note import CiviNote
-from civipy.option_group import CiviCustomField
-from civipy.option_group import CiviCustomValue
-from civipy.option_group import CiviOptionGroup
-from civipy.option_group import CiviOptionValue
-from civipy.order import CiviOrder
-from civipy.order import CiviPayment
-from civipy.user import CiviUFField
-from civipy.user import CiviUFGroup
-from civipy.user import CiviUFJoin
-from civipy.user import CiviUFMatch
-from civipy.user import CiviUser
+from civipy.option_group import CiviCustomField, CiviCustomValue, CiviOptionGroup, CiviOptionValue
+from civipy.order import CiviOrder, CiviPayment
+from civipy.user import CiviUFField, CiviUFGroup, CiviUFJoin, CiviUFMatch, CiviUser
+
+# enable e.g.
+# >>> import civipy
+# >>> civipy.init(rest_base="", ...)
+from civipy.base.config import SETTINGS
+
+init = SETTINGS.init
+del SETTINGS
+__all__ = [
+    "CiviActivity",
+    "CiviActivityContact",
+    "CiviAddress",
+    "CiviContact",
+    "CiviContribution",
+    "CiviContributionRecur",
+    "CiviCountry",
+    "CiviCustomField",
+    "CiviCustomValue",
+    "CiviEmail",
+    "CiviEntityTag",
+    "CiviEvent",
+    "CiviGrant",
+    "CiviGroup",
+    "CiviGroupContact",
+    "CiviLocationType",
+    "CiviMailingEventQueue",
+    "CiviMembership",
+    "CiviMembershipPayment",
+    "CiviNote",
+    "CiviOptionGroup",
+    "CiviOptionValue",
+    "CiviOrder",
+    "CiviParticipant",
+    "CiviPayment",
+    "CiviPhone",
+    "CiviRelationship",
+    "CiviStateProvince",
+    "CiviTag",
+    "CiviUFField",
+    "CiviUFGroup",
+    "CiviUFJoin",
+    "CiviUFMatch",
+    "CiviUser",
+    "CiviWebsite",
+    "CiviCRMBase",
+    "init",
+]

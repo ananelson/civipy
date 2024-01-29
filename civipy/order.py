@@ -1,4 +1,4 @@
-from civipy.base import CiviCRMBase
+from civipy.base.base import CiviCRMBase
 
 
 class CiviOrder(CiviCRMBase):
@@ -8,4 +8,10 @@ class CiviOrder(CiviCRMBase):
 class CiviPayment(CiviCRMBase):
     @classmethod
     def cancel(cls, **kwargs):
-        return cls._post_method()("cancel", "Payment", kwargs)
+        return cls.action("cancel", **kwargs)
+
+    @classmethod
+    def find_by_transaction_id(cls, trxn_id: str) -> "CiviPayment | None":
+        """Find a Contribution Payment by payment transaction ID"""
+        found = cls.find_all(trxn_id=trxn_id)
+        return next(filter(lambda c: bool(c.civi.get("contribution_id")), found), None)

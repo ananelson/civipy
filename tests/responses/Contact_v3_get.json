@@ -1,0 +1,22 @@
+{
+  "validunique@example.com": {
+    "is_error": 0,
+    "version": 3,
+    "count": 1,
+    "id": 3,
+    "values": [
+      {
+        "contact_id": "10",
+        "contact_type": "Individual",
+        "display_name": "Valid Unique",
+        "email": "validunique@example.com"
+      }
+    ]
+  },
+  "unknown@example.com": {
+    "is_error": 0,
+    "version": 3,
+    "count": 0,
+    "values": []
+  }
+}

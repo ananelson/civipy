@@ -1,5 +1,4 @@
-from civipy.base import CiviCRMBase
-from civipy.base import get_unique
+from civipy.base.base import CiviCRMBase
 
 
 class CiviOptionValue(CiviCRMBase):
@@ -8,14 +7,12 @@ class CiviOptionValue(CiviCRMBase):
 
 class CiviOptionGroup(CiviCRMBase):
     @classmethod
-    def find_options_by_group_name(cls, option_group_name):
+    def find_options_by_group_name(cls, option_group_name: str):
         """
         Taking an option_group_name, looks up the group and its members.
         """
-        response = CiviOptionGroup._get(name=option_group_name)
-        og = get_unique(response)
-        values_response = CiviOptionValue._get(option_group_id=og["id"])
-        return values_response["values"]
+        og = CiviOptionGroup.find(name=option_group_name)
+        return CiviOptionValue.find_all(option_group_id=og["id"])
 
     @classmethod
     def option_values_dict_by_group_name(cls, option_group_name):
@@ -34,18 +31,15 @@ class CiviCustomValue(CiviCRMBase):
 
 class CiviCustomField(CiviCRMBase):
     @classmethod
-    def find_field_by_label(cls, field_label):
-        response = CiviCustomField._get(label=field_label)
-        field = get_unique(response)
-        return field
+    def find_field_by_label(cls, field_label: str):
+        return CiviCustomField.find(label=field_label)
 
     @classmethod
-    def find_options_by_field_label(cls, label):
+    def find_options_by_field_label(cls, label: str):
         custom_field = cls.find(label=label)
-        values_response = CiviOptionValue._get(option_group_id=custom_field.civi_option_group_id)
-        return values_response["values"]
+        return CiviOptionValue.find_all(option_group_id=custom_field.civi_option_group_id)
 
     @classmethod
-    def options_label_map(cls, label):
+    def options_label_map(cls, label: str):
         option_values = cls.find_options_by_field_label(label)
         return dict((ov["label"], ov["value"]) for ov in option_values)
