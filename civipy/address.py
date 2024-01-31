@@ -6,8 +6,8 @@ class CiviCountry(CiviCRMBase):
     civicrm_entity_table = "country"
 
     @classmethod
-    def find_by_country_code(cls, country_code: str):
-        return cls.find(iso_code=country_code)
+    def find_by_country_code(cls, country_code: str, select: list[str] | None = None):
+        return cls.find(select=select, iso_code=country_code)
 
 
 class CiviStateProvince(CiviCRMBase):

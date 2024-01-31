@@ -5,6 +5,7 @@ from civipy.contact import CiviContact, CiviEmail, CiviPhone, CiviRelationship, 
 from civipy.contact import CiviGroup, CiviGroupContact
 from civipy.contribution import CiviContribution, CiviContributionRecur
 from civipy.event import CiviEvent, CiviParticipant
+from civipy.financial import CiviEntityFinancialTrxn
 from civipy.grant import CiviGrant
 from civipy.mailing import CiviMailingEventQueue
 from civipy.membership import CiviMembership, CiviMembershipPayment
@@ -31,6 +32,7 @@ __all__ = [
     "CiviCustomField",
     "CiviCustomValue",
     "CiviEmail",
+    "CiviEntityFinancialTrxn",
     "CiviEntityTag",
     "CiviEvent",
     "CiviGrant",

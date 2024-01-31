@@ -8,9 +8,9 @@ class CiviContact(CiviNotable):
     civicrm_entity_table = "contact"
 
     @classmethod
-    def find_by_email(cls, email_address):
-        email_obj = CiviEmail.find(email=email_address)
-        return cls.find(id=email_obj["contact_id"])
+    def find_by_email(cls, email_address: str, select: list[str] | None = None):
+        email_obj = CiviEmail.find(select=["contact_id"], email=email_address)
+        return cls.find(select=select, id=email_obj["contact_id"])
 
 
 class CiviEmail(CiviCRMBase):
@@ -98,9 +98,9 @@ class CiviGroupContact(CiviCRMBase):
 
 class CiviGroup(CiviCRMBase):
     @classmethod
-    def find_by_title(cls, title: str) -> "CiviGroup":
+    def find_by_title(cls, title: str, select: list[str] | None = None) -> "CiviGroup":
         """Creates a new CiviGroup object populated with data for the group entitled "title"."""
-        return cls.find(title=title)
+        return cls.find(select=select, title=title)
 
     def add_member(self, civi_contact: CiviContact) -> CiviGroupContact:
-        return CiviGroupContact.find_or_create(contact_id=civi_contact.civi["id"], group_id=self.civi["id"])
+        return CiviGroupContact.find_or_create(where={"contact_id": civi_contact.id, "group_id": self.id})

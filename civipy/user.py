@@ -31,7 +31,7 @@ class CiviUFMatch(CiviCRMBase):
     def find_wp(cls, contact_ids):
         result = []
         for contact_id in set(contact_ids):
-            found = cls.find(search_key="contact_id", contact_id=contact_id)
+            found = cls.find(contact_id=contact_id)
             if not found:
                 continue
             result.append(found)

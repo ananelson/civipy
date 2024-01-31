@@ -18,7 +18,7 @@ def test_get_no_match():
 
 
 def test_find_with_existing():
-    contact = CiviContact.find(search_key="email", email="validunique@example.com")
+    contact = CiviContact.find(email="validunique@example.com")
 
     assert isinstance(contact, CiviContact)
     assert contact.display_name == "Valid Unique"
@@ -46,9 +46,7 @@ def test_find_with_existing():
 
 
 def test_find_and_update_with_existing():
-    contact = CiviContact.find_and_update(
-        search_key="email", email="validunique@example.com", display_name="Updated Name"
-    )
+    contact = CiviContact.find_and_update(where={"email": "validunique@example.com"}, display_name="Updated Name")
 
     assert isinstance(contact, CiviContact)
     assert contact.display_name == "Updated Name"
@@ -58,19 +56,19 @@ def test_find_and_update_with_existing():
 
 
 def test_find_no_match():
-    contact = CiviContact.find(search_key="email", email="unknown@example.com")
+    contact = CiviContact.find(email="unknown@example.com")
 
     assert contact is None
 
 
 def test_find_all_no_match():
-    contact = CiviContact.find_all(search_key="email", email="unknown@example.com")
+    contact = CiviContact.find_all(email="unknown@example.com")
 
     assert contact == []
 
 
 def test_find_or_create_with_existing():
-    contact = CiviContact.find_or_create(search_key="email", email="validunique@example.com")
+    contact = CiviContact.find_or_create(where={"email": "validunique@example.com"})
 
     assert isinstance(contact, CiviContact)
     assert contact.display_name == "Valid Unique"

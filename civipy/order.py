@@ -11,7 +11,7 @@ class CiviPayment(CiviCRMBase):
         return cls.action("cancel", **kwargs)
 
     @classmethod
-    def find_by_transaction_id(cls, trxn_id: str) -> "CiviPayment | None":
+    def find_by_transaction_id(cls, trxn_id: str, select: list[str] | None = None) -> "CiviPayment | None":
         """Find a Contribution Payment by payment transaction ID"""
-        found = cls.find_all(trxn_id=trxn_id)
+        found = cls.find_all(select=select, trxn_id=trxn_id)
         return next(filter(lambda c: bool(c.civi.get("contribution_id")), found), None)

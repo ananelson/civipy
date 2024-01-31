@@ -14,16 +14,16 @@ project's `pyproject.toml` file, or a `.civipy` file in the user's home folder.
 Settings in environment variables will overwrite any file settings. Alternatively,
 you can call `civipy.config.SETTINGS.init()` to set the configuration values.
 
-| Setting                   | Environment Variable | `.civipy` File             | `pyproject.toml` File          |
-|---------------------------|----------------------|----------------------------|--------------------------------|
-|                           |                      |                            | `[tool.civipy]`                |
-| Connection *(required)*   | `CIVI_REST_BASE`     | `rest_base=http://civi.py` | `rest-base = "http://civi.py"` |
-| API Version               | `CIVI_API_VERSION`   | `api_version=4`            | `api-version = "4"`            |
-| Access Token *(required)* | `CIVI_USER_KEY`      | `user_key=...`             | `user-key = "..."`             |
-| Site Token *(required)*   | `CIVI_SITE_KEY`      | `site_key=...`             | `site-key = "..."`             |
-| Log File                  | `CIVI_LOG_FILE`      | `log_file=/tmp/civipy.log` | `log-file = "/tmp/civipy.log"` |
-| Log Level                 | `CIVI_LOG_LEVEL`     | `log_level=WARNING`        | `log-level = "WARNING"`        |
-| Config File               | `CIVI_CONFIG`        |                            |                                |
+| Setting                         | Environment Variable | `.civipy` File             | `pyproject.toml` File          |
+|---------------------------------|----------------------|----------------------------|--------------------------------|
+|                                 |                      |                            | `[tool.civipy]`                |
+| Connection *(required)*         | `CIVI_REST_BASE`     | `rest_base=http://civi.py` | `rest-base = "http://civi.py"` |
+| API Version                     | `CIVI_API_VERSION`   | `api_version=4`            | `api-version = "4"`            |
+| Access Token *(required)*       | `CIVI_USER_KEY`      | `user_key=...`             | `user-key = "..."`             |
+| Site Token *(required for v3)*  | `CIVI_SITE_KEY`      | `site_key=...`             | `site-key = "..."`             |
+| Log File                        | `CIVI_LOG_FILE`      | `log_file=/tmp/civipy.log` | `log-file = "/tmp/civipy.log"` |
+| Log Level                       | `CIVI_LOG_LEVEL`     | `log_level=WARNING`        | `log-level = "WARNING"`        |
+| Config File                     | `CIVI_CONFIG`        |                            |                                |
 
 ### Connection
 The Connection setting lets you specify the URL of your REST API, or the `cv` or
@@ -50,8 +50,8 @@ for working with them.
 ```python
 from civipy import CiviContact, CiviEmail
 
-contact = CiviContact.action("get", primary_email="ana@ananelson.com")
-email = CiviEmail.find_or_create(search_key=["contact_id", "email"], **kwargs)
+contact = CiviContact.find_by_email("ana@ananelson.com")
+email = CiviEmail.find_or_create(where={"contact_id": contact.id, "email": "ana@ananelson.com"})
 contact.update(nick_name="Ana")
 ```
 

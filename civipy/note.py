@@ -6,18 +6,15 @@ class CiviNote(CiviCRMBase):
 
 
 class CiviNotable(CiviCRMBase):
-    def _kwargs_for_note(self, subject: str, note: str) -> dict[str, str | int]:
+    def _where_for_note(self, subject: str) -> dict[str, str | int]:
         return {
             "entity_id": self.civi["id"],
             "entity_table": self.__class__.civicrm_entity_table,
             "subject": subject,
-            "note": note,
         }
 
     def add_note(self, subject: str, note: str):
-        return CiviNote.create(**self._kwargs_for_note(subject, note))
+        return CiviNote.create(note=note, **self._where_for_note(subject))
 
     def find_or_create_note(self, subject: str, note: str):
-        return CiviNote.find_or_create(
-            search_key=["entity_id", "entity_table", "subject"], **self._kwargs_for_note(subject, note)
-        )
+        return CiviNote.find_or_create(where=self._where_for_note(subject), note=note)

@@ -1,101 +1,113 @@
 import json
+from typing import TypeVar
 from civipy.base.config import logger
 from civipy.base.utils import get_unique
 from civipy.exceptions import CiviProgrammingError
 from civipy.interface import get_interface, CiviValue, CiviResponse, Interface
 
+CiviEntity = TypeVar("CiviEntity", bound="CiviCRMBase")
+
 
 class CiviCRMBase:
-    ###################################
-    # Common API Read Action methods  #
-    ###################################
     @classmethod
     def get(cls, **kwargs) -> CiviResponse:
-        return cls.action("get", **kwargs)
+        """Make an API request with the "get" action and return the full response."""
+        query = cls._interface().limit(25)
+        query.update(kwargs)
+        return cls.action("get", **query)
 
-    ###################################
-    # Common API Write Action methods #
-    ###################################
     @classmethod
-    def create(cls, **kwargs):
-        response = cls.action("create", **kwargs)
+    def create(cls, **kwargs: CiviValue) -> CiviEntity:
+        """Make an API request with the "create" action and return an object of class cls
+        populated with the created object's data."""
+        query = cls._interface().values(kwargs)
+        response = cls.action("create", **query)
         logger.debug("new record created! full response: %s" % str(response))
-        if not isinstance(response.get("values"), int):
-            value = get_unique(response)
-            return cls(value)
-        else:
-            return response
+        return cls(get_unique(response))
 
-    def update(self, **kwargs):
+    def update(self: CiviEntity, **kwargs: CiviValue) -> CiviResponse:
+        """Update the current object with the values specified in kwargs. Returns the full
+        API response."""
         self.civi.update(kwargs)
-        kwargs["id"] = self.civi_id
-        self.action("create", **kwargs)
+        query = self._interface().where({"id": self.civi_id})
+        query.update(self._interface().values(kwargs))
+        return self.action("create", **query)
 
-    ##############################
-    # Common convenience methods #
-    ##############################
     @classmethod
-    def find(cls, search_key: str | list[str] = "id", **kwargs) -> CiviValue | None:
-        """Looks for an existing object in CiviCRM with parameter search_key
-        equal to the value for search_key specified in kwargs. Returns an
-        object of class cls populated with this object's data if found, otherwise
+    def find(cls, select: list[str] | None = None, **kwargs: CiviValue) -> CiviEntity | None:
+        """Looks for an existing object in CiviCRM with parameters equal to the values
+        specified in kwargs. If using API v4 and select is specified, the result will include
+        the specified keys.
+
+        Returns an object of class cls populated with this object's data if found, otherwise
         returns None."""
-        search_query = cls._interface().search_query(search_key, kwargs)
-        response = cls.action("get", **search_query)
+        query = cls._interface().where(kwargs)
+        if select:
+            query["select"] = select
+        response = cls.get(**query)
         if response["count"] == 0:
             return None
         return cls(get_unique(response))
 
     @classmethod
-    def find_and_update(cls, search_key: str | list[str] = "id", **kwargs):
-        """Looks for an existing object in CiviCRM with parameter search_key
-        equal to the value for search_key specified in kwargs. If a unique
-        record is found, record is also updated with additional values in kwargs.
+    def find_all(cls, select: list[str] | None = None, **kwargs: CiviValue) -> list[CiviEntity]:
+        """Looks for multiple existing objects in CiviCRM with parameters equal to the
+        values specified in kwargs. If using API v4 and select is specified, the result will
+        include the specified keys.
 
-        Returns an object of class cls populated with this object's data if
-        found, otherwise returns None."""
-        search_query = cls._interface().search_query(search_key, kwargs)
-        response = cls.action("get", **search_query)
-        if response["count"] == 0:
-            return
-        else:
-            value = get_unique(response)
-            value.update(kwargs)
-            new_response = cls.action("create", **value)
-            updated_value = get_unique(new_response)
-            # not all fields are included in the return from an update, so we merge both sources
-            updated_value.update(value)
-            return cls(updated_value)
-
-    @classmethod
-    def find_all(cls, search_key: str | list[str] = "id", **kwargs):
-        """Looks for multiple existing objects in CiviCRM with parameter
-        search_key equal to the value for search_key specified in
-        kwargs. Returns a list of objects of class cls populated with data.
-        Returns an empty list if no matching values found."""
-        search_query = cls._interface().search_query(search_key, kwargs)
-        response = cls.action("get", **search_query)
+        Returns a list of objects of class cls populated with data. Returns an empty list
+        if no matching values found."""
+        query = cls._interface().where(kwargs)
+        if select:
+            query["select"] = select
+        response = cls.action("get", **query)
         return [cls(v) for v in response["values"]]
 
     @classmethod
-    def find_or_create(cls, search_key: str | list[str] = "id", do_update: bool = False, **kwargs):
-        """Looks for an existing object in CiviCRM with parameter
-        search_key equal to the value for search_key
-        specified in kwargs. Returns this object if it exists,
-        otherwise creates a new object."""
+    def find_and_update(cls, where: CiviValue, **kwargs: CiviValue) -> CiviEntity | None:
+        """Looks for an existing object in CiviCRM with parameters equal to the values
+        specified in `where`.
+
+        If a unique record is found, record is also updated with values in `kwargs`.
+
+        Returns an object of class cls populated with this object's data if found, otherwise
+        returns None."""
+        query = cls._interface().where(where)
+        response = cls.get(**query)
+        if response["count"] == 0:
+            return None
+
+        value = get_unique(response)
+        value.update(kwargs)
+        new_response = cls.action("create", **value)
+        updated_value = get_unique(new_response)
+        # not all fields are included in the return from an update, so we merge both sources
+        updated_value.update(value)
+        return cls(updated_value)
+
+    @classmethod
+    def find_or_create(cls, where: CiviValue, do_update: bool = False, **kwargs: CiviValue) -> CiviEntity:
+        """Looks for an existing object in CiviCRM with parameters search_keys equal to the
+        values for search_keys specified in kwargs.
+
+        If a unique record is found and do_update is True, record is also updated with
+        values in `kwargs`.
+
+        If no record is found, a new record is created with the data in `where` and `kwargs`.
+
+        Returns an object of class cls populated with the found, updated, or created
+        object's data."""
         if do_update:
-            obj = cls.find_and_update(search_key=search_key, **kwargs)
+            obj = cls.find_and_update(where, **kwargs)
         else:
-            obj = cls.find(search_key=search_key, **kwargs)
+            obj = cls.find(**kwargs)
 
         if obj is None:
-            return cls.create(**kwargs)
-        else:
-            return obj
+            query = where.copy()
+            query.update(kwargs)
+            return cls.create(**query)
+        return obj
 
-    #############################
-    # Direct API access methods #
-    #############################
     @classmethod
     def action(cls, action: str, **kwargs) -> CiviResponse:
         """Calls the CiviCRM API action and returns parsed JSON on success."""
@@ -108,22 +120,22 @@ class CiviCRMBase:
 
     @classmethod
     def _interface(cls) -> Interface:
-        if cls._interface_reference is None:
-            cls._interface_reference = get_interface()
-        return cls._interface_reference
+        """Instantiate the appropriate API interface and store it on the CiviCRMBase class,
+        so that it will be instantiated only once and available to all entity classes."""
+        if CiviCRMBase._interface_reference is None:
+            CiviCRMBase._interface_reference = get_interface()
+        return CiviCRMBase._interface_reference
 
-    ############################
-    # Instance support methods #
-    ############################
-    def pprint(self):
+    def pprint(self: CiviEntity) -> None:
+        """Print the current record's data in a human-friendly format."""
         print(json.dumps(self.civi, sort_keys=True, indent=4))
 
-    def __init__(self, data: CiviValue):
+    def __init__(self: CiviEntity, data: CiviValue) -> None:
         self.civi = data
 
     REPR_FIELDS = ["display_name", "name"]
 
-    def __repr__(self):
+    def __repr__(self: CiviEntity):
         label = None
 
         for field_name in self.REPR_FIELDS:
@@ -133,14 +145,14 @@ class CiviCRMBase:
 
         return f"<{self.__class__.__name__} {self.civi_id}: {label}>"
 
-    def __getattr__(self, key: str):
+    def __getattr__(self: CiviEntity, key: str):
         if key in self.civi:
             return self.civi[key]
         elif key.startswith("civi_"):
             return self.civi[key[5:]]
         return object.__getattribute__(self, key)
 
-    def __setattr__(self, key: str, value: str | int | None):
+    def __setattr__(self: CiviEntity, key: str, value: str | int | None) -> None:
         if key == "civi":
             object.__setattr__(self, key, value)
         elif key in self.civi:

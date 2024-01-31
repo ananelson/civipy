@@ -1,6 +1,6 @@
 import json
 import subprocess
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlencode
 import urllib3
 from civipy.base.config import SETTINGS, logger
 from civipy.exceptions import CiviAPIError, CiviHTTPError, CiviProgrammingError
@@ -8,6 +8,12 @@ from civipy.interface.base import CiviValue, CiviV4Response, BaseInterface, Civi
 
 
 class V4Interface(BaseInterface):
+    __doc__ = (
+        BaseInterface.__doc__
+        + """
+This is the v4 API interface."""
+    )
+
     def __call__(self, action: str, entity: str, params: CiviV4Request) -> CiviV4Response:
         if self.func is None:
             if SETTINGS.api_version != "4":
@@ -26,13 +32,18 @@ class V4Interface(BaseInterface):
     def http_request(self, action: str, entity: str, kwargs: CiviV4Request) -> CiviV4Response:
         # v4 see https://docs.civicrm.org/dev/en/latest/api/v4/rest/
         url = urljoin(SETTINGS.rest_base, "/".join((entity, action)))
-        params = {"api_key": SETTINGS.user_key, "key": SETTINGS.site_key, "params": kwargs}
+        body = urlencode({"params": json.dumps(kwargs, separators=(",", ":"))})
+        logger.debug("Request for %s: %s", url, body)
 
         # header for v4 API per https://docs.civicrm.org/dev/en/latest/api/v4/rest/#x-requested-with
-        headers = {"X-Requested-With": "XMLHttpRequest"}
+        headers = {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-Civi-Auth": f"Bearer {SETTINGS.user_key}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
 
         # v4 docs: "Requests are typically submitted with HTTP POST, but read-only operations may use HTTP GET."
-        response = urllib3.request("POST", url, json=params, headers=headers)
+        response = urllib3.request("POST", url, body=body, headers=headers)
         return self.process_http_response(response)
 
     def process_http_response(self, response: urllib3.BaseHTTPResponse) -> CiviV4Response:
@@ -45,7 +56,12 @@ class V4Interface(BaseInterface):
     def run_cv_cli_process(self, action: str, entity: str, params: CiviValue) -> CiviV4Response:
         # see `cv --help api4` or https://docs.civicrm.org/dev/en/latest/api/v4/usage/#cv
         process = subprocess.run(
-            [SETTINGS.rest_base, "api4", ".".join((entity, action)), json.dumps(params).encode("UTF-8")],
+            [
+                SETTINGS.rest_base,
+                "api4",
+                ".".join((entity, action)),
+                json.dumps(params, separators=(",", ":")).encode("UTF-8"),
+            ],
             capture_output=True,
         )
         return self.process_json_response(json.loads(process.stdout.decode("UTF-8")))
@@ -54,7 +70,7 @@ class V4Interface(BaseInterface):
         process = subprocess.run(
             [SETTINGS.rest_base, "civicrm-api", "version=4", "--out=json", "--in=json", "%s.%s" % (entity, action)],
             capture_output=True,
-            input=json.dumps(params).encode("UTF-8"),
+            input=json.dumps(params, separators=(",", ":")).encode("UTF-8"),
         )
         return self.process_json_response(json.loads(process.stdout.decode("UTF-8")))
 
@@ -65,15 +81,16 @@ class V4Interface(BaseInterface):
         return data
 
     @staticmethod
-    def search_query(search_key: str | list[str] | None, kwargs: CiviValue) -> CiviV4Request:
-        if search_key == "id" and "id" not in kwargs:
-            # search_key is not specified, assume all of kwargs corresponds to search key
-            search_key = list(kwargs.keys())
-        elif search_key is None:
-            search_key = []
-        elif isinstance(search_key, str):
-            search_key = [search_key]
-        return {"where": [[k, "=", kwargs[k]] for k in search_key if k in kwargs]}
+    def limit(value: int) -> CiviV4Request:
+        return {"limit": value}
+
+    @staticmethod
+    def where(kwargs: CiviValue) -> CiviV4Request:
+        return {"where": [[k, "=", v] for k, v in kwargs.items()]}
+
+    @staticmethod
+    def values(kwargs: CiviValue) -> CiviV4Request:
+        return {"values": kwargs}
 
 
 v4_interface = V4Interface()

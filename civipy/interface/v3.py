@@ -7,6 +7,12 @@ from civipy.interface.base import CiviValue, CiviV3Response, BaseInterface
 
 
 class V3Interface(BaseInterface):
+    __doc__ = (
+        BaseInterface.__doc__
+        + """
+This is the v3 API interface."""
+    )
+
     def __call__(self, action: str, entity: str, params: CiviValue) -> CiviV3Response:
         if self.func is None:
             if SETTINGS.api_version != "3":
@@ -28,11 +34,10 @@ class V3Interface(BaseInterface):
         # header for v3 API per https://docs.civicrm.org/dev/en/latest/api/v3/rest/#x-requested-with
         headers = {"X-Requested-With": "XMLHttpRequest"}
 
-        # v3 API GET actions are get, getaction, getactions, getcondition, getcount, getfield, getfields, getlist,
-        #   getoptions, getrefcount, getsingle, getunique, getvalue;
-        # v3 POST actions are cancel, completetransaction, create, delete, repeattransaction, replace, sendconfirmation,
-        #   ~setvalue~, ~transact~, ~update~, validate
+        # v3 API GET actions apparently all start with "get"; POST actions are create, delete, etc.
         method = "GET" if action.startswith("get") else "POST"
+        # urllib3 uses the `fields` parameter to compose the query string for GET requests,
+        # and uses the same parameter to compose form data for POST requests
         response = urllib3.request(method, SETTINGS.rest_base, fields=params, headers=headers)
         return self.process_http_response(response)
 
@@ -84,20 +89,16 @@ class V3Interface(BaseInterface):
         return data
 
     @staticmethod
-    def search_query(search_key: str | list[str] | None, kwargs: CiviValue) -> CiviValue:
-        if search_key == "id" and "id" not in kwargs:
-            # search_key is not specified, assume all of kwargs corresponds to search key
-            return kwargs
-        if search_key is None:
-            search_key = []
-        elif isinstance(search_key, str):
-            search_key = [search_key]
+    def limit(value: int) -> CiviValue:
+        return {"options": '{"limit":' + str(value) + "}"}
 
-        query = dict((k, kwargs[k]) for k in search_key if k in kwargs)
-        for k, v in kwargs.items():
-            if k.startswith("return"):
-                query[k] = v
-        return query
+    @staticmethod
+    def where(kwargs: CiviValue) -> CiviValue:
+        return kwargs
+
+    @staticmethod
+    def values(kwargs: CiviValue) -> CiviValue:
+        return kwargs
 
 
 v3_interface = V3Interface()

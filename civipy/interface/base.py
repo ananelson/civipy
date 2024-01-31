@@ -30,16 +30,21 @@ class CiviV4Request(TypedDict, total=False):
     chain: dict[str, list["str | CiviV4Request"]]
     groupBy: list[str]
     having: list[list[str | int]]
+    debug: bool
 
 
 class CiviV4ResponseOptional(TypedDict, total=False):
     error_code: int
     error_message: str
+    debug: dict[str, str | list[str]]
 
 
 class CiviV4Response(CiviV4ResponseOptional):
+    entity: str
+    action: str
     version: Literal[4]
     count: int
+    countFetched: int
     values: list[CiviValue]
 
 
@@ -47,6 +52,14 @@ CiviResponse = CiviV3Response | CiviV4Response
 
 
 class BaseInterface:
+    """Interface manages communication with the CiviCRM API
+
+    Call the Interface instance with `action`, `entity`, and `params` values to submit an API request.
+
+    The `search_query` method is a helper function to generate query parameters.
+    The `values` method is a helper function to generate parameters for create/update.
+    """
+
     def __init__(self):
         self.func: Callable[[str, str, CiviValue], CiviResponse] | None = None
 
@@ -54,7 +67,15 @@ class BaseInterface:
         raise NotImplementedError
 
     @staticmethod
-    def search_query(search_key: str | list[str] | None, kwargs: CiviValue) -> CiviValue | CiviV4Request:
+    def limit(value: int) -> CiviValue | CiviV4Request:
+        raise NotImplementedError
+
+    @staticmethod
+    def where(kwargs: CiviValue) -> CiviValue | CiviV4Request:
+        raise NotImplementedError
+
+    @staticmethod
+    def values(kwargs: CiviValue) -> CiviValue | CiviV4Request:
         raise NotImplementedError
 
 

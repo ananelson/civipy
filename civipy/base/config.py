@@ -2,6 +2,7 @@ import logging
 import os
 import pathlib
 import sys
+from typing import Callable, Literal
 from civipy.exceptions import CiviProgrammingError
 
 try:
@@ -13,50 +14,44 @@ except ImportError:
     tomllib = None
 
 
-logger = logging.getLogger("civipy")
-NOTSET = object()
-REQUIRED = ["rest_base", "user_key", "site_key"]
-OPTIONAL = ["log_file", "log_level", "api_version"]
-ALL_KEYS = REQUIRED + OPTIONAL
-DEFAULTS = {"api_version": "4"}
-
-
 class Settings:
     def __init__(self):
-        self.values: dict[str, str | NOTSET | None] = {key: NOTSET for key in ALL_KEYS}
-        self._api_type: str | NOTSET = NOTSET
+        self.values: dict[str, Setting] = {
+            "rest_base": Setting(required=True),
+            "user_key": Setting(required=True, private=True),
+            "site_key": Setting(required=lambda: self.values["api_version"].value == "3", private=True),
+            "log_file": Setting(),
+            "log_level": Setting(default="DEBUG"),
+            "api_version": Setting(default="4"),
+        }
+        self._api_type: Literal["http", "drush", "wp", "cvcli"] | None = None
 
     def init(self, **kwargs) -> None:
         """set configuration settings then set up logging"""
         for key, value in kwargs.items():
-            if key not in ALL_KEYS:
+            if key not in self.values:
                 continue
-            self.values[key] = value
+            self.values[key].value = value
 
         # set unset values to default or raise error if they are required
         missing = []
-        for key, value in self.values.items():
-            if key in REQUIRED and value in (NOTSET, None):
+        for key, setting in self.values.items():
+            if setting.required and (setting.not_set or not setting.value):
                 missing.append(key)
-            elif value is NOTSET:
-                self.values[key] = DEFAULTS.get(key, None)
+            elif setting.not_set:
+                self.values[key].value = None
         if missing:
             raise CiviProgrammingError(f"Missing required configuration values: {missing}")
 
-        # set up logging
-        if self.values["log_level"]:
-            logger.setLevel(self.values["log_level"])
-        if self.values["log_file"]:
-            h = logging.FileHandler(self.values["log_file"])
-            h.setLevel(self.values["log_level"] or logging.DEBUG)
-            logger.addHandler(h)
+        # set up logging - if log_file was not set, it will be None and basicConfig will ignore it and set up stream
+        logging.basicConfig(filename=self.values["log_file"].value, level=self.values["log_level"].value)
 
     @property
     def api_type(self) -> str:
-        if self._api_type is NOTSET:
+        if self._api_type is None:
             self._read_config()
             # determine value for api_type
-            base = self.values["rest_base"].lower()
+            base = self.rest_base.lower()
             if "http" in base:
                 self._api_type = "http"
             elif "drush" in base:
@@ -78,7 +73,7 @@ class Settings:
             else:
                 values, source = read_dot_civipy(file), str(file)
         # Read any settings set by environment variables
-        env_values = read_environment()
+        env_values = {key[5:].lower(): value for key, value in os.environ.items() if key.startswith("CIVI_")}
         if env_values:
             source = " and ".join(filter(None, (source, "environment variables")))
             values.update(env_values)
@@ -87,22 +82,50 @@ class Settings:
 
     def __getattr__(self, item: str):
         """Look up config value, with fallback to read environment variables or config files"""
-        if item not in ALL_KEYS:
+        if item not in self.values:
             return super().__getattribute__(item)
-        if self.values[item] is NOTSET:
+        if self.values[item].not_set:
             self._read_config()
-        return self.values[item]
+        return self.values[item].value
+
+    def __repr__(self):
+        values = []
+        for k, v in self.values.items():
+            if v.not_set:
+                value = "[UNSET]"
+            elif v.value is None:
+                value = "None"
+            elif v.private:
+                value = "[SET]"
+            else:
+                value = f"'{v.value}'"
+            values.append(f"{k}={value}")
+        return f"<Settings {' '.join(values)}>"
 
 
-def read_environment() -> dict[str, str | None]:
-    """read settings from OS environment"""
-    values = {}
-    for key in ALL_KEYS:
-        name = f"CIVI_{key.upper()}"
-        value = os.environ.get(name, NOTSET)
-        if value is not NOTSET:
-            values.update(set_value(key, value, name))
-    return values
+class Setting:
+    def __init__(self, default: str | None = None, required: bool | Callable[[], bool] = False, private: bool = False):
+        self.not_set = True
+        self.private = private
+        self._is_required = required
+        self._default = default
+        self._value: str | None = None
+
+    @property
+    def required(self) -> bool:
+        return self._is_required() if callable(self._is_required) else self._is_required
+
+    @property
+    def value(self) -> str | None:
+        return None if self.not_set else self._value
+
+    @value.setter
+    def value(self, new_value: str | None) -> None:
+        self.not_set = False
+        self._value = self._default if new_value is None else new_value
+
+    def __repr__(self):
+        return self.value or ""
 
 
 def read_dot_civipy(file: pathlib.Path) -> dict[str, str | None]:
@@ -110,22 +133,22 @@ def read_dot_civipy(file: pathlib.Path) -> dict[str, str | None]:
     values = {}
     with file.open() as fp:
         for line in fp:
-            key, _, value = line.partition("=")
-            values.update(set_value(key, value, file))
+            if line.startswith("#"):
+                continue
+            key, _, line_value = line.partition("=")
+            value, _, comment = line_value.partition(" #")
+            values[key.lower().strip()] = value.strip() or None
     return values
 
 
 def read_pyproject_toml(file: pathlib.Path) -> dict[str, str | None]:
     """read settings from pyproject.toml file"""
-    values = {}
     if tomllib is None:
-        return values
+        return {}
     with open(file, "rb") as fp:
         pyproject_toml = tomllib.load(fp)
     config = pyproject_toml.get("tool", {}).get("civipy", {})
-    for key, value in config.items():
-        values.update(set_value(key, value, file))
-    return values
+    return {key.replace("-", "_"): value or None for key, value in config.items()}
 
 
 def find_config_file() -> pathlib.Path | None:
@@ -155,19 +178,6 @@ def find_config_file() -> pathlib.Path | None:
     return None
 
 
-def set_value(key: str, value: str, source: pathlib.Path | str) -> dict[str, str | None]:
-    """return a dict to update settings with a normalized key and value, raise error identifying `source` if invalid"""
-    key = key.replace("-", "_").lower().strip()
-    if key not in ALL_KEYS:
-        return {}
-    value = value.strip()
-    if not value:
-        if value in REQUIRED:
-            raise CiviProgrammingError(f"Invalid value for {key} in {source}")
-        value = None
-    return {key: value}
-
-
-logger.setLevel(logging.DEBUG)
 SETTINGS = Settings()
+logger = logging.getLogger("civipy")
 __all__ = ["SETTINGS", "logger"]

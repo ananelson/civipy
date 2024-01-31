@@ -25,6 +25,7 @@ class CiviHTTPError(CivipyException):
         self.r = r
         self.status_code = r.status
         self.message = r.data.decode("utf-8", errors="replace")
+        super().__init__(f"{self.status_code}: {self.message}")
 
 
 class CiviAPIError(CivipyException):
